@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora TEP — Biocor Rede D'Or</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #222; }
+
+.header {
+  background: #fff;
+  border-bottom: 3px solid #E8611A;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.header img { height: 52px; object-fit: contain; }
+.header-title { text-align: center; flex: 1; padding: 0 16px; }
+.header-title h1 { font-size: 1.15rem; color: #1a2e5a; font-weight: 700; }
+.header-title p { font-size: 0.75rem; color: #E8611A; font-weight: 600; margin-top: 2px; }
+.badge-dir { background: #E8611A; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+
+.container { max-width: 1300px; margin: 0 auto; padding: 18px 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 14px; }
+.card-header { background: #1a2e5a; color: #fff; padding: 9px 14px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.4px; }
+.card-header.orange { background: #E8611A; }
+.card-header.green { background: #1a7a3c; }
+.card-header.red { background: #c0392b; }
+.card-body { padding: 12px 14px; }
+
+.form-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: flex-end; }
+.form-group { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 100px; }
+.form-group label { font-size: 0.72rem; color: #555; font-weight: 600; }
+.form-group input[type="number"], .form-group input[type="text"], .form-group select {
+  border: 1px solid #ccc; border-radius: 5px; padding: 6px 8px; font-size: 0.85rem; background: #fafafa;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #E8611A; background: #fff; }
+
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.check-grid-1 { display: grid; grid-template-columns: 1fr; gap: 5px; }
+@media(max-width: 600px) { .check-grid { grid-template-columns: 1fr; } }
+
+.check-item {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 5px 8px; border-radius: 5px; cursor: pointer;
+  font-size: 0.79rem; line-height: 1.3; border: 1px solid #e8e8e8;
+  transition: background 0.12s;
+}
+.check-item:hover { background: #f5f7ff; border-color: #1a2e5a; }
+.check-item input[type="checkbox"] { margin-top: 2px; accent-color: #E8611A; width: 14px; height: 14px; flex-shrink: 0; }
+.check-item .pts { font-size: 0.68rem; color: #E8611A; font-weight: 700; margin-left: auto; white-space: nowrap; padding-left: 4px; }
+.check-item.auto-filled { background: #fff8f0; border-color: #E8611A; }
+
+.section-label { font-size: 0.72rem; color: #666; font-weight: 700; margin: 8px 0 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+.score-box {
+  border-radius: 7px; padding: 10px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+.score-box .score-label { font-size: 0.8rem; font-weight: 700; color: #333; }
+.score-box .score-value { font-size: 1.5rem; font-weight: 900; min-width: 44px; text-align: center; }
+.score-box .score-interp { font-size: 0.75rem; font-weight: 600; }
+.score-low { background: #e8f5e9; border: 2px solid #1a7a3c; }
+.score-low .score-value, .score-low .score-interp { color: #1a7a3c; }
+.score-mod { background: #fff8e1; border: 2px solid #f39c12; }
+.score-mod .score-value, .score-mod .score-interp { color: #e67e22; }
+.score-high { background: #fdecea; border: 2px solid #c0392b; }
+.score-high .score-value, .score-high .score-interp { color: #c0392b; }
+.score-neutral { background: #f0f2f5; border: 2px solid #aaa; }
+.score-neutral .score-value, .score-neutral .score-interp { color: #555; }
+
+.classif-box { border-radius: 9px; padding: 14px 18px; margin-bottom: 10px; border: 3px solid; }
+.classif-box h2 { font-size: 1.1rem; font-weight: 900; margin-bottom: 4px; }
+.classif-box .desc { font-size: 0.8rem; line-height: 1.5; }
+.cat-a { background: #e8f5e9; border-color: #1a7a3c; color: #1a7a3c; }
+.cat-b { background: #e3f2fd; border-color: #1565c0; color: #1565c0; }
+.cat-c { background: #fff8e1; border-color: #e67e22; color: #e67e22; }
+.cat-d { background: #fce4ec; border-color: #c0392b; color: #c0392b; }
+.cat-e { background: #fdecea; border-color: #7b0000; color: #7b0000; }
+
+.conduta-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 10px; border-radius: 5px; font-size: 0.8rem; line-height: 1.4;
+  margin-bottom: 5px; background: #f8f9ff; border-left: 3px solid #1a2e5a;
+}
+.conduta-item .icon { font-size: 0.95rem; flex-shrink: 0; }
+
+.btn-calc {
+  background: #E8611A; color: #fff; border: none; border-radius: 8px;
+  padding: 13px 28px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  width: 100%; letter-spacing: 0.4px; transition: background 0.2s; margin-top: 6px;
+}
+.btn-calc:hover { background: #c94e10; }
+.btn-reset {
+  background: #fff; color: #1a2e5a; border: 2px solid #1a2e5a;
+  border-radius: 8px; padding: 9px 20px; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; width: 100%; margin-top: 5px; transition: background 0.2s;
+}
+.btn-reset:hover { background: #f0f2f5; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+.tab-btn {
+  padding: 6px 14px; border: 2px solid #1a2e5a; border-radius: 20px;
+  background: #fff; color: #1a2e5a; font-size: 0.77rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.tab-btn.active { background: #1a2e5a; color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.anticoag-table { width: 100%; border-collapse: collapse; font-size: 0.77rem; }
+.anticoag-table th { background: #1a2e5a; color: #fff; padding: 7px 9px; text-align: left; font-size: 0.74rem; }
+.anticoag-table td { padding: 6px 9px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+.anticoag-table tr:hover td { background: #f5f7ff; }
+.anticoag-table tr.hl td { background: #fff3e0; font-weight: 600; }
+
+.footer {
+  text-align: center; padding: 14px; font-size: 0.7rem; color: #888;
+  border-top: 1px solid #e0e0e0; margin-top: 20px; background: #fff;
+}
+
+#results { display: none; }
+#placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 380px; color: #bbb; }
+
+@media print {
+  .btn-calc, .btn-reset, .tabs, .tab-btn { display: none !important; }
+  .tab-content { display: block !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="logo_biocor.jpg" alt="Biocor Rede D'Or" onerror="this.style.display='none'">
+  <div class="header-title">
+    <h1>🫁 Calculadora de Protocolo — Embolia Pulmonar (TEP)</h1>
+    <p>Estratificação Completa · Diretrizes AHA/ACC/ACCP 2026 · Biocor Instituto · Rede D'Or</p>
+  </div>
+  <span class="badge-dir">AHA/ACC 2026</span>
+</div>
+
+<div style="background:#fff;border-bottom:2px solid #E8611A;padding:0 24px;display:flex;">
+  <a href="index.html" style="display:inline-block;padding:10px 20px;color:#1a2e5a;text-decoration:none;font-size:0.85rem;font-weight:700;border-bottom:3px solid #E8611A;">📊 Calculadora Manual</a>
+  <a href="analisar.html" style="display:inline-block;padding:10px 20px;color:#1a2e5a;text-decoration:none;font-size:0.85rem;font-weight:600;border-bottom:3px solid transparent;">🤖 Análise por IA <span style='background:#E8611A;color:white;font-size:0.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;'>NOVO</span></a>
+</div>
+
+<div class="container">
+<div class="grid-2">
+
+<!-- ===== COLUNA ESQUERDA: FORMULÁRIO ===== -->
+<div>
+
+  <!-- IDENTIFICAÇÃO -->
+  <div class="card">
+    <div class="card-header">👤 Identificação do Paciente</div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2"><label>Nome (opcional)</label><input type="text" id="nome" placeholder="Nome do paciente"></div>
+        <div class="form-group"><label>Idade (anos) *</label><input type="number" id="idade" min="0" max="120" placeholder="Ex: 65"></div>
+        <div class="form-group"><label>Sexo</label>
+          <select id="sexo"><option value="">—</option><option value="M">Masc.</option><option value="F">Fem.</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>FC (bpm) *</label><input type="number" id="fc" min="0" max="300" placeholder="Ex: 110"></div>
+        <div class="form-group"><label>PAS (mmHg) *</label><input type="number" id="pas" min="0" max="300" placeholder="Ex: 90"></div>
+        <div class="form-group"><label>SatO₂ (%) *</label><input type="number" id="sato2" min="0" max="100" placeholder="Ex: 92"></div>
+        <div class="form-group"><label>Peso (kg)</label><input type="number" id="peso" min="0" max="300" placeholder="Ex: 70"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESCORE DE WELLS -->
+  <div class="card">
+    <div class="card-header orange">📊 Escore de Wells para TEP</div>
+    <div class="card-body">
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="w1"> Sinais/sintomas clínicos de TVP <span class="pts">+3</span></label>
+        <label class="check-item"><input type="checkbox" id="w2"> TEP é o diagnóstico mais provável <span class="pts">+3</span></label>
+        <label class="check-item" id="lw3"><input type="checkbox" id="w3"> FC &gt; 100 bpm <span class="pts">+1,5</span></label>
+        <label class="check-item"><input type="checkbox" id="w4"> Imobilização ≥ 3d ou cirurgia nas últimas 4 sem <span class="pts">+1,5</span></label>
+        <label class="check-item"><input type="checkbox" id="w5"> TVP ou TEP prévio <span class="pts">+1,5</span></label>
+        <label class="check-item"><input type="checkbox" id="w6"> Hemoptise <span class="pts">+1</span></label>
+        <label class="check-item"><input type="checkbox" id="w7"> Malignidade ativa (últimos 6 meses ou paliativo) <span class="pts">+1</span></label>
+      </div>
+      <div id="wells-box" class="score-box score-neutral" style="margin-top:10px">
+        <div><div class="score-label">Escore de Wells</div><div class="score-interp" id="wells-interp">Preencha os campos</div></div>
+        <div class="score-value" id="wells-val">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERC -->
+  <div class="card">
+    <div class="card-header">🔍 Critérios PERC (Exclusão sem D-Dímero)</div>
+    <div class="card-body">
+      <p style="font-size:0.75rem;color:#666;margin-bottom:8px">Aplicável se Wells ≤ 4. Se <b>TODOS negativos</b> → TEP excluído sem D-Dímero.</p>
+      <div class="check-grid">
+        <label class="check-item" id="lp1"><input type="checkbox" id="p1"> Idade ≥ 50 anos</label>
+        <label class="check-item" id="lp2"><input type="checkbox" id="p2"> FC ≥ 100 bpm</label>
+        <label class="check-item" id="lp3"><input type="checkbox" id="p3"> SatO₂ &lt; 95% em ar ambiente</label>
+        <label class="check-item"><input type="checkbox" id="p4"> Hemoptise</label>
+        <label class="check-item"><input type="checkbox" id="p5"> Uso de estrógeno exógeno</label>
+        <label class="check-item"><input type="checkbox" id="p6"> Cirurgia ou trauma nas últimas 4 semanas</label>
+        <label class="check-item"><input type="checkbox" id="p7"> TVP prévia</label>
+        <label class="check-item"><input type="checkbox" id="p8"> Edema unilateral de MMII</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACHADOS CLÍNICOS -->
+  <div class="card">
+    <div class="card-header orange">🔬 Achados Clínicos e Exames</div>
+    <div class="card-body">
+      <div class="section-label">Hemodinâmica</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="hemo1"> Instabilidade hemodinâmica (choque)</label>
+        <label class="check-item"><input type="checkbox" id="hemo2"> PCR / ressuscitação</label>
+        <label class="check-item"><input type="checkbox" id="hemo3"> Necessidade de vasopressor</label>
+        <label class="check-item"><input type="checkbox" id="hemo4"> Hipoxemia grave / cianose</label>
+      </div>
+      <div class="section-label">Biomarcadores</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="bio1"> Troponina elevada (I ou T)</label>
+        <label class="check-item"><input type="checkbox" id="bio2"> BNP / NT-proBNP elevado</label>
+        <label class="check-item"><input type="checkbox" id="bio3"> Lactato &gt; 2 mmol/L</label>
+        <label class="check-item"><input type="checkbox" id="bio4"> D-Dímero positivo</label>
+      </div>
+      <div class="section-label">Imagem / ECG</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="img1"> Disfunção de VD ao Ecocardiograma</label>
+        <label class="check-item"><input type="checkbox" id="img2"> Disfunção de VD à Angio-TC</label>
+        <label class="check-item"><input type="checkbox" id="img3"> Trombo em câmaras direitas</label>
+        <label class="check-item"><input type="checkbox" id="img4"> S1Q3T3 ou BRD novo ao ECG</label>
+        <label class="check-item"><input type="checkbox" id="img5"> Angio-TC confirmou TEP</label>
+        <label class="check-item"><input type="checkbox" id="img6"> TEP bilateral / central (trombo em sela)</label>
+      </div>
+      <div class="section-label">Comorbidades</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="com1"> Câncer ativo</label>
+        <label class="check-item"><input type="checkbox" id="com2"> Doença cardiopulmonar prévia</label>
+        <label class="check-item"><input type="checkbox" id="com3"> Insuficiência renal (ClCr &lt; 30)</label>
+        <label class="check-item"><input type="checkbox" id="com4"> Sangramento ativo / alto risco</label>
+        <label class="check-item"><input type="checkbox" id="com5"> AVC isquêmico recente (&lt; 3 meses)</label>
+        <label class="check-item"><input type="checkbox" id="com6"> Trombocitopenia (&lt; 100.000)</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- sPESI -->
+  <div class="card">
+    <div class="card-header">📉 Escore sPESI (Prognóstico pós-diagnóstico)</div>
+    <div class="card-body">
+      <div class="check-grid">
+        <label class="check-item" id="lsp1"><input type="checkbox" id="sp1"> Idade &gt; 80 anos <span class="pts">+1</span></label>
+        <label class="check-item"><input type="checkbox" id="sp2"> Câncer ativo <span class="pts">+1</span></label>
+        <label class="check-item"><input type="checkbox" id="sp3"> Doença cardiopulmonar crônica <span class="pts">+1</span></label>
+        <label class="check-item" id="lsp4"><input type="checkbox" id="sp4"> FC ≥ 110 bpm <span class="pts">+1</span></label>
+        <label class="check-item" id="lsp5"><input type="checkbox" id="sp5"> PAS &lt; 100 mmHg <span class="pts">+1</span></label>
+        <label class="check-item" id="lsp6"><input type="checkbox" id="sp6"> SatO₂ &lt; 90% <span class="pts">+1</span></label>
+      </div>
+      <div id="spesi-box" class="score-box score-neutral" style="margin-top:10px">
+        <div><div class="score-label">Escore sPESI</div><div class="score-interp" id="spesi-interp">Preencha os campos</div></div>
+        <div class="score-value" id="spesi-val">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HESTIA -->
+  <div class="card">
+    <div class="card-header green">🏠 Critérios Hestia (Alta Precoce)</div>
+    <div class="card-body">
+      <p style="font-size:0.75rem;color:#666;margin-bottom:8px">Se <b>TODOS negativos</b> e sPESI = 0 → candidato à alta precoce com DOAC.</p>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="h1"> Instabilidade hemodinâmica</label>
+        <label class="check-item"><input type="checkbox" id="h2"> Necessita trombólise ou embolectomia</label>
+        <label class="check-item"><input type="checkbox" id="h3"> Sangramento ativo ou alto risco</label>
+        <label class="check-item"><input type="checkbox" id="h4"> Necessita O₂ suplementar &gt; 24h</label>
+        <label class="check-item"><input type="checkbox" id="h5"> TEP sob anticoagulação prévia</label>
+        <label class="check-item"><input type="checkbox" id="h6"> Dor intensa com analgesia IV</label>
+        <label class="check-item"><input type="checkbox" id="h7"> Insuficiência renal (ClCr &lt; 30)</label>
+        <label class="check-item"><input type="checkbox" id="h8"> Insuficiência hepática grave</label>
+        <label class="check-item"><input type="checkbox" id="h9"> Gestação</label>
+        <label class="check-item"><input type="checkbox" id="h10"> Razão médica/social para internação</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- FATORES DE RISCO TEV -->
+  <div class="card">
+    <div class="card-header">⚠️ Fatores de Risco para TEV</div>
+    <div class="card-body">
+      <div class="section-label">Maiores transitórios</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="fr1"> Cirurgia maior (últimas 12 sem)</label>
+        <label class="check-item"><input type="checkbox" id="fr2"> Hospitalização (últimas 12 sem)</label>
+        <label class="check-item"><input type="checkbox" id="fr3"> Fratura de MMII (últimas 12 sem)</label>
+        <label class="check-item"><input type="checkbox" id="fr4"> Trauma maior (últimas 12 sem)</label>
+      </div>
+      <div class="section-label">Maiores persistentes</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="fr5"> Neoplasia ativa</label>
+        <label class="check-item"><input type="checkbox" id="fr6"> Síndrome antifosfolipídeo</label>
+        <label class="check-item"><input type="checkbox" id="fr7"> Trombofilia hereditária</label>
+        <label class="check-item"><input type="checkbox" id="fr8"> DII ativa</label>
+      </div>
+      <div class="section-label">Menores</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="fr9"> Imobilização &gt; 3 dias</label>
+        <label class="check-item"><input type="checkbox" id="fr10"> Viagem longa (&gt; 8h)</label>
+        <label class="check-item"><input type="checkbox" id="fr11"> Gestação / puerpério</label>
+        <label class="check-item"><input type="checkbox" id="fr12"> Estrógeno / contraceptivo oral</label>
+        <label class="check-item"><input type="checkbox" id="fr13"> Obesidade (IMC &gt; 30)</label>
+        <label class="check-item"><input type="checkbox" id="fr14"> TVP/TEP prévio</label>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-calc" onclick="calcular()">🧮 CALCULAR TODOS OS ESCORES</button>
+  <button class="btn-reset" onclick="resetar()">↺ Limpar Formulário</button>
+
+</div>
+
+<!-- ===== COLUNA DIREITA: RESULTADOS ===== -->
+<div id="results">
+
+  <div class="card">
+    <div class="card-header red">🎯 Classificação AHA/ACC 2026</div>
+    <div class="card-body"><div id="classif-box"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">📊 Resumo dos Escores</div>
+    <div class="card-body"><div id="resumo-escores"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header orange">💊 Conduta Recomendada</div>
+    <div class="card-body"><div id="conduta-box"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header green">💉 Anticoagulação</div>
+    <div class="card-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('doac',this)">DOAC</button>
+        <button class="tab-btn" onclick="showTab('hbpm',this)">HBPM</button>
+        <button class="tab-btn" onclick="showTab('hnf',this)">HNF IV</button>
+        <button class="tab-btn" onclick="showTab('duracao',this)">Duração</button>
+      </div>
+      <div id="tab-doac" class="tab-content active">
+        <table class="anticoag-table">
+          <tr><th>Medicamento</th><th>Dose Fase Aguda</th><th>Obs.</th></tr>
+          <tr class="hl"><td>Apixabana</td><td>10 mg 2x/dia × 7d → 5 mg 2x/dia</td><td>Preferido. Sem HBPM prévia</td></tr>
+          <tr class="hl"><td>Rivaroxabana</td><td>15 mg 2x/dia × 21d → 20 mg 1x/dia</td><td>Sem HBPM prévia</td></tr>
+          <tr><td>Dabigatrana</td><td>150 mg 2x/dia (após 5-10d HBPM)</td><td>Requer HBPM inicial</td></tr>
+          <tr><td>Edoxabana</td><td>60 mg 1x/dia (após 5-10d HBPM)</td><td>Requer HBPM inicial</td></tr>
+        </table>
+        <p style="font-size:0.7rem;color:#888;margin-top:6px">Fase estendida (após 6 meses): Apixabana 2,5mg 2x/dia ou Rivaroxabana 10mg 1x/dia</p>
+      </div>
+      <div id="tab-hbpm" class="tab-content">
+        <table class="anticoag-table">
+          <tr><th>Medicamento</th><th>Dose</th><th>Obs.</th></tr>
+          <tr class="hl"><td>Enoxaparina</td><td>1 mg/kg SC 12/12h</td><td>Preferida. Anti-Xa se ClCr&lt;30 ou obesidade</td></tr>
+          <tr><td>Enoxaparina</td><td>1,5 mg/kg SC 1x/dia</td><td>Alternativa selecionada</td></tr>
+          <tr><td>Fondaparinux</td><td>&lt;50kg: 5mg | 50-100kg: 7,5mg | &gt;100kg: 10mg SC/dia</td><td>Contraindicado ClCr&lt;30</td></tr>
+        </table>
+      </div>
+      <div id="tab-hnf" class="tab-content">
+        <table class="anticoag-table">
+          <tr><th>Fase</th><th>Dose</th><th>Alvo</th></tr>
+          <tr class="hl"><td>Bolus IV</td><td>80 UI/kg (máx 5.000 UI)</td><td>—</td></tr>
+          <tr><td>Infusão contínua</td><td>18 UI/kg/h (máx 1.000 UI/h)</td><td>TTPa 60-100s</td></tr>
+          <tr><td>Ajuste</td><td>Nomograma hospitalar</td><td>TTPa a cada 6h</td></tr>
+        </table>
+        <p style="font-size:0.7rem;color:#888;margin-top:6px">Preferir HNF IV em: instabilidade, ClCr&lt;30, candidatos a trombólise/cirurgia</p>
+      </div>
+      <div id="tab-duracao" class="tab-content">
+        <table class="anticoag-table">
+          <tr><th>Situação</th><th>Duração</th><th>Fase Estendida</th></tr>
+          <tr><td>Fator transitório maior</td><td>3 meses</td><td>Não rotineiramente</td></tr>
+          <tr><td>Fator transitório menor</td><td>3 meses</td><td>Considerar individualmente</td></tr>
+          <tr class="hl"><td>TEP não provocado (1º episódio)</td><td>3-6 meses</td><td>Considerar indefinida</td></tr>
+          <tr class="hl"><td>TEP recorrente</td><td>6 meses</td><td>Indefinida (Classe I)</td></tr>
+          <tr class="hl"><td>TEP + Câncer ativo</td><td>Enquanto ativo</td><td>Indefinida (DOAC preferido)</td></tr>
+          <tr><td>Síndrome antifosfolipídeo</td><td>Indefinida</td><td>Warfarina INR 2-3</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">⏱️ Indicadores de Qualidade (QualiD'Or)</div>
+    <div class="card-body">
+      <table class="anticoag-table">
+        <tr><th>Indicador</th><th>Meta</th></tr>
+        <tr><td>Tempo Porta-Anticoagulação</td><td><b style="color:#1a7a3c">≤ 60 min</b></td></tr>
+        <tr><td>Tempo Porta-Imagem (Angio-TC)</td><td><b style="color:#1a7a3c">≤ 60 min</b></td></tr>
+        <tr><td>Tempo Porta-Reperfusão (Trombólise)</td><td><b style="color:#c0392b">≤ 120 min</b></td></tr>
+        <tr><td>Ativação do PERT (Cat. D/E)</td><td><b style="color:#1a7a3c">100%</b></td></tr>
+        <tr><td>Estratificação documentada</td><td><b style="color:#1a7a3c">100%</b></td></tr>
+        <tr><td>Retorno ambulatorial em 30 dias</td><td><b style="color:#1a7a3c">≥ 90%</b></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <button class="btn-reset" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+
+</div>
+
+<div id="placeholder">
+  <div style="font-size:3.5rem;margin-bottom:14px">🫁</div>
+  <div style="font-size:0.95rem;font-weight:600">Preencha o formulário ao lado</div>
+  <div style="font-size:0.8rem;margin-top:5px">e clique em "Calcular Todos os Escores"</div>
+</div>
+
+</div>
+</div>
+
+<div class="footer">
+  Calculadora de Protocolo de TEP · Biocor Instituto · Rede D'Or · Diretrizes AHA/ACC/ACCP/ACEP/CHEST 2026<br>
+  <b>Ferramenta de suporte à decisão clínica. Não substitui o julgamento médico.</b>
+</div>
+
+<script>
+function autoFill() {
+  const fc = +document.getElementById('fc').value || 0;
+  const pas = +document.getElementById('pas').value || 0;
+  const sato2 = +document.getElementById('sato2').value || 0;
+  const idade = +document.getElementById('idade').value || 0;
+
+  const setAuto = (id, val) => {
+    const el = document.getElementById(id);
+    el.checked = val;
+    el.closest('.check-item').classList.toggle('auto-filled', val);
+  };
+
+  setAuto('w3', fc > 100);
+  setAuto('p1', idade >= 50);
+  setAuto('p2', fc >= 100);
+  setAuto('p3', sato2 > 0 && sato2 < 95);
+  setAuto('sp1', idade > 80);
+  setAuto('sp4', fc >= 110);
+  setAuto('sp5', pas > 0 && pas < 100);
+  setAuto('sp6', sato2 > 0 && sato2 < 90);
+}
+
+['fc','pas','sato2','idade'].forEach(id => {
+  document.getElementById(id).addEventListener('input', autoFill);
+});
+
+const chk = id => document.getElementById(id).checked;
+
+function calcWells() {
+  let s = 0;
+  if (chk('w1')) s += 3;
+  if (chk('w2')) s += 3;
+  if (chk('w3')) s += 1.5;
+  if (chk('w4')) s += 1.5;
+  if (chk('w5')) s += 1.5;
+  if (chk('w6')) s += 1;
+  if (chk('w7')) s += 1;
+  return s;
+}
+
+function calcSpesi() {
+  let s = 0;
+  for (let i = 1; i <= 6; i++) if (chk('sp' + i)) s++;
+  return s;
+}
+
+function calcHestia() {
+  let s = 0;
+  for (let i = 1; i <= 10; i++) if (chk('h' + i)) s++;
+  return s;
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function setScoreBox(boxId, valId, interpId, score, cls, interp) {
+  const box = document.getElementById(boxId);
+  box.className = 'score-box ' + cls;
+  document.getElementById(valId).textContent = typeof score === 'number' ? (Number.isInteger(score) ? score : score.toFixed(1)) : score;
+  document.getElementById(interpId).textContent = interp;
+}
+
+function calcular() {
+  autoFill();
+
+  const fc = +document.getElementById('fc').value || 0;
+  const pas = +document.getElementById('pas').value || 0;
+  const sato2 = +document.getElementById('sato2').value || 0;
+  const idade = +document.getElementById('idade').value || 0;
+
+  const wells = calcWells();
+  const spesi = calcSpesi();
+  const hestia = calcHestia();
+
+  const instavel = chk('hemo1') || chk('hemo3') || (pas > 0 && pas < 90);
+  const pcr = chk('hemo2');
+  const disfVD = chk('img1') || chk('img2');
+  const troponina = chk('bio1');
+  const bnp = chk('bio2');
+
+  const percPos = ['p1','p2','p3','p4','p5','p6','p7','p8'].filter(id => chk(id));
+  const percNeg = percPos.length === 0;
+
+  // Wells display
+  let wCls, wInterp;
+  if (wells <= 1) { wCls = 'score-low'; wInterp = 'Baixa probabilidade (≤ 1%)'; }
+  else if (wells <= 4) { wCls = 'score-mod'; wInterp = 'Probabilidade moderada (~12%)'; }
+  else { wCls = 'score-high'; wInterp = 'Alta probabilidade (~37%)'; }
+  setScoreBox('wells-box', 'wells-val', 'wells-interp', wells, wCls, wInterp);
+
+  // sPESI display
+  const sCls = spesi === 0 ? 'score-low' : 'score-high';
+  const sInterp = spesi === 0 ? 'Baixo risco (mortalidade 30d: ~1%)' : `Alto risco (mortalidade 30d: ~10%)`;
+  setScoreBox('spesi-box', 'spesi-val', 'spesi-interp', spesi, sCls, sInterp);
+
+  // Classificação AHA/ACC 2026
+  let cat, catCls, catDesc, condutas;
+
+  if (pcr) {
+    cat = 'CATEGORIA E — RISCO MUITO ALTO (PCR)';
+    catCls = 'cat-e';
+    catDesc = 'TEP com parada cardiorrespiratória. Mortalidade extremamente elevada. Requer ressuscitação imediata e decisão emergencial de reperfusão.';
+    condutas = [
+      ['🚨','RCP de alta qualidade imediata'],
+      ['💉','HNF IV bolus: 80 UI/kg (máx 5.000 UI) + infusão 18 UI/kg/h'],
+      ['⚡','Trombólise em bolus: Alteplase 50 mg IV em 2 min (Classe I)'],
+      ['🏥','Se trombólise contraindicada: embolectomia cirúrgica emergência ou trombectomia percutânea'],
+      ['🫀','Considerar ECMO-VA como ponte para reperfusão definitiva'],
+      ['🔔','ATIVAR PERT IMEDIATAMENTE'],
+      ['🏨','UTI com monitorização invasiva']
+    ];
+  } else if (instavel) {
+    cat = 'CATEGORIA D — RISCO ALTO (Choque Obstrutivo)';
+    catCls = 'cat-d';
+    catDesc = 'TEP com instabilidade hemodinâmica (PAS < 90 mmHg, vasopressor ou hipoperfusão). Mortalidade hospitalar > 15%.';
+    condutas = [
+      ['🔔','ATIVAR PERT IMEDIATAMENTE'],
+      ['💉','HNF IV: bolus 80 UI/kg + infusão 18 UI/kg/h (alvo TTPa 60-100s)'],
+      ['⚡','Trombólise sistêmica: Alteplase 100 mg IV em 2h (Classe I) — se sem contraindicação absoluta'],
+      ['🩺','Se contraindicação à trombólise: embolectomia cirúrgica (Classe I) ou CDT/trombectomia mecânica'],
+      ['💊','Vasopressor: Norepinefrina 0,1-0,5 mcg/kg/min (preferencial)'],
+      ['😮‍💨','Suporte ventilatório: O₂ alto fluxo; IOT com cautela (risco de colapso)'],
+      ['🏨','UTI com monitorização invasiva (PAM, débito cardíaco)']
+    ];
+  } else if (disfVD && (troponina || bnp)) {
+    cat = 'CATEGORIA C — RISCO INTERMEDIÁRIO-ALTO';
+    catCls = 'cat-c';
+    catDesc = 'TEP estável com disfunção de VD à imagem E biomarcadores elevados. Risco de deterioração precoce. Monitorização intensiva obrigatória.';
+    condutas = [
+      ['🔔','Considerar ativação do PERT'],
+      ['💉','Anticoagulação plena: HBPM (Enoxaparina 1mg/kg SC 12/12h) ou HNF IV'],
+      ['🏥','Internação em UTI ou semi-intensiva com monitorização contínua'],
+      ['📊','Monitorar sinais de deterioração hemodinâmica a cada 2-4h'],
+      ['⚡','Trombólise de resgate se deterioração hemodinâmica (Classe IIa)'],
+      ['🩺','Discutir CDT ou trombectomia mecânica com PERT se alto risco de sangramento'],
+      ['🔬','Repetir troponina e ecocardiograma em 6-12h']
+    ];
+  } else if (disfVD || troponina || bnp) {
+    cat = 'CATEGORIA B — RISCO INTERMEDIÁRIO-BAIXO';
+    catCls = 'cat-b';
+    catDesc = 'TEP estável com disfunção de VD OU biomarcadores elevados (não ambos). Risco moderado. Internação para anticoagulação e observação.';
+    condutas = [
+      ['💉','Anticoagulação plena: DOAC (Apixabana ou Rivaroxabana) ou HBPM'],
+      ['🏥','Internação em enfermaria com monitorização'],
+      ['📊','Monitorar sinais vitais e saturação continuamente'],
+      ['🔬','Repetir ecocardiograma e troponina em 12-24h'],
+      ['📅','Alta após estabilização clínica e laboratorial (48-72h)'],
+      ['🏠','Retorno ambulatorial em 7-14 dias']
+    ];
+  } else {
+    const altaPrecoce = spesi === 0 && hestia === 0;
+    if (altaPrecoce) {
+      cat = 'CATEGORIA A — BAIXO RISCO (Alta Precoce Elegível)';
+      catCls = 'cat-a';
+      catDesc = 'TEP de baixo risco com sPESI = 0 e critérios Hestia negativos. Candidato à alta precoce com DOAC oral ambulatorial.';
+      condutas = [
+        ['💊','Apixabana 10mg 2x/dia × 7d → 5mg 2x/dia OU Rivaroxabana 15mg 2x/dia × 21d → 20mg/dia'],
+        ['🏠','Internação com DOAC e avaliar alta precoce (24-48h) se suporte social adequado'],
+        ['📅','Retorno ambulatorial obrigatório em 7-14 dias'],
+        ['📋','Orientar sinais de alarme: piora da dispneia, síncope, hemoptise'],
+        ['🔬','Investigar causa do TEP (neoplasia oculta se não provocado)']
+      ];
+    } else {
+      cat = 'CATEGORIA A/B — BAIXO RISCO (Internação Recomendada)';
+      catCls = 'cat-a';
+      catDesc = 'TEP de baixo risco com critérios Hestia positivos ou sPESI > 0. Internação para anticoagulação e observação.';
+      condutas = [
+        ['💊','Anticoagulação: Apixabana 10mg 2x/dia × 7d → 5mg 2x/dia (preferencial)'],
+        ['🏥','Internação com DOAC e avaliar alta precoce após estabilização'],
+        ['📊','Monitorar sinais vitais e saturação'],
+        ['📅','Retorno ambulatorial em 7-14 dias após alta'],
+        ['🔬','Investigar causa do TEP']
+      ];
+    }
+  }
+
+  // Renderizar
+  document.getElementById('classif-box').innerHTML = `
+    <div class="classif-box ${catCls}">
+      <h2>${cat}</h2>
+      <div class="desc">${catDesc}</div>
+    </div>`;
+
+  const percStatus = wells > 4
+    ? 'Não aplicável (Wells > 4)'
+    : percNeg
+      ? '✅ TODOS NEGATIVOS — TEP excluído sem D-Dímero'
+      : `⚠️ ${percPos.length} critério(s) positivo(s) — D-Dímero necessário`;
+
+  const hCls = hestia === 0 ? 'score-low' : 'score-high';
+  const hInterp = hestia === 0 ? '✅ Candidato à alta precoce' : `❌ ${hestia} critério(s) positivo(s) — internar`;
+
+  document.getElementById('resumo-escores').innerHTML = `
+    <div class="score-box ${wCls}" style="margin-bottom:7px">
+      <div><div class="score-label">Wells</div><div class="score-interp">${wInterp}</div></div>
+      <div class="score-value">${Number.isInteger(wells) ? wells : wells.toFixed(1)}</div>
+    </div>
+    <div class="score-box ${sCls}" style="margin-bottom:7px">
+      <div><div class="score-label">sPESI</div><div class="score-interp">${sInterp}</div></div>
+      <div class="score-value">${spesi}</div>
+    </div>
+    <div class="score-box ${hCls}" style="margin-bottom:7px">
+      <div><div class="score-label">Hestia</div><div class="score-interp">${hInterp}</div></div>
+      <div class="score-value">${hestia}</div>
+    </div>
+    <div class="score-box ${percNeg && wells <= 4 ? 'score-low' : 'score-neutral'}" style="margin-bottom:7px">
+      <div><div class="score-label">PERC</div><div class="score-interp">${percStatus}</div></div>
+      <div class="score-value">${percPos.length}</div>
+    </div>`;
+
+  document.getElementById('conduta-box').innerHTML = condutas.map(([icon, txt]) =>
+    `<div class="conduta-item"><span class="icon">${icon}</span><span>${txt}</span></div>`
+  ).join('');
+
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  if (window.innerWidth < 900) {
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function resetar() {
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.check-item').classList.remove('auto-filled');
+  });
+  document.querySelectorAll('input[type="number"], input[type="text"]').forEach(inp => inp.value = '');
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'flex';
+  setScoreBox('wells-box','wells-val','wells-interp','—','score-neutral','Preencha os campos');
+  setScoreBox('spesi-box','spesi-val','spesi-interp','—','score-neutral','Preencha os campos');
+}
+</script>
+</body>
+</html>

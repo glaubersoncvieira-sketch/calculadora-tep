@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise Automática TEP — Biocor Rede D'Or</title>
+<style>
+:root {
+  --azul: #1a3a6b;
+  --laranja: #c8602a;
+  --laranja-escuro: #a04e22;
+  --cinza-claro: #f4f6f9;
+  --cinza-borda: #dde3ec;
+  --vermelho: #b71c1c;
+  --verde: #2e7d32;
+  --amarelo: #f57f17;
+  --laranja-medio: #e65100;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--cinza-claro); color: #333; min-height: 100vh; }
+
+.header {
+  background: var(--azul);
+  color: white;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.header-logo { display: flex; align-items: center; gap: 12px; }
+.header-logo img { height: 44px; object-fit: contain; }
+.header-title { text-align: center; flex: 1; }
+.header-title h1 { font-size: 1.2rem; font-weight: 700; }
+.header-title p { font-size: 0.75rem; opacity: 0.85; }
+.badge-aha { background: var(--laranja); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+
+.nav-bar {
+  background: #fff;
+  border-bottom: 2px solid var(--laranja);
+  padding: 0 24px;
+  display: flex;
+}
+.nav-bar a {
+  display: inline-block;
+  padding: 10px 20px;
+  color: var(--azul);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+.nav-bar a:hover { color: var(--laranja); }
+.nav-bar a.ativo { color: var(--laranja); border-bottom-color: var(--laranja); }
+
+.main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+.input-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.input-card h2 {
+  font-size: 1.1rem;
+  color: var(--azul);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.input-card p.desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+textarea {
+  width: 100%;
+  min-height: 180px;
+  border: 2px solid var(--cinza-borda);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+}
+textarea:focus { outline: none; border-color: var(--azul); }
+.btn-analisar {
+  margin-top: 14px;
+  background: var(--laranja);
+  color: white;
+  border: none;
+  padding: 13px 32px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+.btn-analisar:hover { background: var(--laranja-escuro); }
+.btn-analisar:disabled { background: #aaa; cursor: not-allowed; }
+.btn-limpar {
+  margin-top: 14px;
+  margin-left: 10px;
+  background: white;
+  color: var(--azul);
+  border: 2px solid var(--azul);
+  padding: 11px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-limpar:hover { background: var(--azul); color: white; }
+
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+  color: var(--azul);
+}
+.loading.ativo { display: block; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 5px solid #dde3ec;
+  border-top-color: var(--laranja);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.erro-box {
+  display: none;
+  background: #fff3f3;
+  border: 2px solid #f44336;
+  border-radius: 8px;
+  padding: 16px;
+  color: #b71c1c;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+.erro-box.ativo { display: block; }
+
+#resultado { display: none; }
+#resultado.ativo { display: block; }
+
+.card-classificacao {
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.card-classificacao .cat-label { font-size: 0.8rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+.card-classificacao .cat-titulo { font-size: 1.6rem; font-weight: 800; margin: 4px 0 12px; line-height: 1.2; }
+.conduta-lista { list-style: none; margin-top: 8px; }
+.conduta-lista li {
+  background: rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.grid-escores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.escore-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px;
+  border-top: 4px solid var(--cinza-borda);
+}
+.escore-card.verde { border-top-color: var(--verde); }
+.escore-card.amarelo { border-top-color: var(--amarelo); }
+.escore-card.laranja { border-top-color: var(--laranja-medio); }
+.escore-card.vermelho { border-top-color: var(--vermelho); }
+.escore-card.cinza { border-top-color: #9e9e9e; }
+.escore-nome { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 4px; }
+.escore-valor { font-size: 2rem; font-weight: 800; color: var(--azul); line-height: 1; }
+.escore-class { font-size: 0.82rem; margin-top: 4px; font-weight: 600; }
+.escore-class.verde { color: var(--verde); }
+.escore-class.amarelo { color: #c77800; }
+.escore-class.laranja { color: var(--laranja-medio); }
+.escore-class.vermelho { color: var(--vermelho); }
+.escore-class.cinza { color: #9e9e9e; }
+
+.secao {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.secao-header {
+  background: var(--azul);
+  color: white;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.secao-body { padding: 16px; }
+.sub-label {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 12px 0 8px;
+}
+.sub-label:first-child { margin-top: 0; }
+.itens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 5px;
+}
+.item-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  border-radius: 5px;
+  line-height: 1.3;
+}
+.item-check.pos { background: #fff3e0; color: #e65100; font-weight: 600; }
+.item-check.neg { color: #aaa; }
+.item-check .ico { font-size: 0.95rem; min-width: 18px; margin-top: 1px; }
+
+.resumo-ia {
+  background: #e8f4fd;
+  border-left: 4px solid #1976d2;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #1a3a6b;
+  margin-bottom: 16px;
+}
+.alertas-box {
+  background: #fff8e1;
+  border-left: 4px solid var(--amarelo);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #5d4037;
+  margin-bottom: 16px;
+}
+.alertas-box ul { margin-left: 16px; margin-top: 6px; }
+
+.paciente-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.pac-item {
+  background: white;
+  border: 1px solid var(--cinza-borda);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+.pac-item strong { display: block; font-size: 0.68rem; text-transform: uppercase; color: #888; margin-bottom: 2px; }
+.pac-item span { font-size: 1rem; font-weight: 700; color: var(--azul); }
+
+.btn-imprimir {
+  background: var(--azul);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-imprimir:hover { background: #122a52; }
+
+.exemplos { margin-top: 12px; font-size: 0.82rem; color: #666; }
+.exemplos strong { color: var(--azul); }
+.exemplo-btn {
+  display: inline-block;
+  background: #e8eef7;
+  color: var(--azul);
+  border: 1px solid #c5d3e8;
+  border-radius: 20px;
+  padding: 3px 12px;
+  margin: 3px 3px 0 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.exemplo-btn:hover { background: var(--azul); color: white; }
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.75rem;
+  color: #888;
+  border-top: 1px solid var(--cinza-borda);
+  margin-top: 32px;
+}
+
+@media print {
+  .header, .nav-bar, .input-card, .btn-imprimir, .footer { display: none !important; }
+  body { background: white; }
+  .main { max-width: 100%; padding: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <img src="logo_biocor.jpg" alt="Biocor Rede D'Or" onerror="this.style.display='none'">
+  </div>
+  <div class="header-title">
+    <h1>🤖 Análise Automática de TEP por IA</h1>
+    <p>Cole a história clínica · A IA extrai os dados e calcula todos os escores automaticamente</p>
+  </div>
+  <div class="badge-aha">AHA/ACC 2026</div>
+</div>
+
+<div class="nav-bar">
+  <a href="index.html">📊 Calculadora Manual</a>
+  <a href="analisar.html" class="ativo">🤖 Análise por IA</a>
+  <a href="#" onclick="abrirConfigKey()" style="margin-left:auto">⚙️ Configurar Chave API</a>
+</div>
+
+<!-- Banner de configuração da chave API -->
+<div id="configBanner" style="display:none;background:#fff3cd;border-bottom:2px solid #ffc107;padding:12px 24px;font-size:0.88rem;color:#856404;">
+  <strong>⚠️ Chave da OpenAI não configurada.</strong>
+  Para usar a análise por IA, insira sua chave abaixo (fica salva apenas no seu navegador):
+  <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input type="password" id="keyInput" placeholder="sk-..." style="padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:0.9rem;width:340px;max-width:100%">
+    <button onclick="salvarKey()" style="background:#1a3a6b;color:white;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600">Salvar</button>
+    <button onclick="document.getElementById('configBanner').style.display='none'" style="background:transparent;border:1px solid #856404;color:#856404;padding:8px 12px;border-radius:6px;cursor:pointer">Fechar</button>
+  </div>
+  <div style="margin-top:6px;font-size:0.78rem;color:#666">Obtenha sua chave em <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#1a3a6b">platform.openai.com/api-keys</a>. A chave <strong>não é enviada para nenhum servidor</strong> — fica apenas no seu dispositivo (localStorage).</div>
+</div>
+
+<div class="main">
+
+  <div class="input-card">
+    <h2>📋 Cole a História Clínica</h2>
+    <p class="desc">
+      Insira o texto livre da história clínica — evolução médica, prontuário, relato clínico ou qualquer descrição do caso.
+      A IA irá extrair automaticamente todos os dados relevantes (FC, PAS, SatO₂, achados de imagem, biomarcadores, etc.)
+      e calcular os escores de Wells, PERC, sPESI, Hestia e a Classificação AHA/ACC 2026 com conduta recomendada.
+    </p>
+    <textarea id="historiaInput" placeholder="Exemplo: Paciente masculino, 68 anos, admitido com dispneia súbita há 3 horas. FC 118 bpm, PAS 88 mmHg, SatO₂ 84% em ar ambiente. Histórico de neoplasia de próstata em tratamento. Angio-TC confirmou TEP bilateral com trombo em sela. Troponina I: 2,8 ng/mL (elevada). BNP: 890 pg/mL. Ecocardiograma: disfunção de VD com dilatação. Sem contraindicação à trombólise..."></textarea>
+
+    <div class="exemplos">
+      <strong>Exemplos rápidos:</strong>
+      <span class="exemplo-btn" onclick="preencherExemplo('alto')">🔴 Risco Alto (Cat. D)</span>
+      <span class="exemplo-btn" onclick="preencherExemplo('intermediario')">🟠 Risco Intermediário-Alto (Cat. C)</span>
+      <span class="exemplo-btn" onclick="preencherExemplo('baixo')">🟢 Baixo Risco (Cat. A)</span>
+    </div>
+
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-top:14px">
+      <button class="btn-analisar" id="btnAnalisar" onclick="analisar()">
+        🤖 Analisar História Clínica
+      </button>
+      <button class="btn-limpar" onclick="limpar()">↺ Limpar</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p><strong>Analisando história clínica...</strong></p>
+      <p style="font-size:0.85rem;color:#666;margin-top:6px">A IA está extraindo os dados e calculando os escores. Aguarde alguns segundos.</p>
+    </div>
+
+    <div class="erro-box" id="erroBox"></div>
+  </div>
+
+  <div id="resultado">
+
+    <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+
+    <div class="resumo-ia" id="resumoIA"></div>
+    <div class="alertas-box" id="alertasBox" style="display:none">
+      <strong>⚠️ Alertas e Observações:</strong>
+      <ul id="alertasList"></ul>
+    </div>
+
+    <div class="paciente-info" id="pacienteInfo"></div>
+
+    <div class="card-classificacao" id="cardClassificacao">
+      <div class="cat-label">Classificação AHA/ACC 2026</div>
+      <div class="cat-titulo" id="catTitulo"></div>
+      <strong style="font-size:0.85rem;opacity:0.9">Conduta Recomendada:</strong>
+      <ul class="conduta-lista" id="condutaLista"></ul>
+    </div>
+
+    <div class="grid-escores">
+      <div class="escore-card" id="cardWells">
+        <div class="escore-nome">Escore de Wells</div>
+        <div class="escore-valor" id="wellsValor">—</div>
+        <div class="escore-class" id="wellsClass"></div>
+      </div>
+      <div class="escore-card" id="cardPERC">
+        <div class="escore-nome">Critérios PERC</div>
+        <div class="escore-valor" id="percValor">—</div>
+        <div class="escore-class" id="percClass"></div>
+      </div>
+      <div class="escore-card" id="cardSPESI">
+        <div class="escore-nome">Escore sPESI</div>
+        <div class="escore-valor" id="spesiValor">—</div>
+        <div class="escore-class" id="spesiClass"></div>
+      </div>
+      <div class="escore-card" id="cardHestia">
+        <div class="escore-nome">Critérios Hestia</div>
+        <div class="escore-valor" id="hestiaValor">—</div>
+        <div class="escore-class" id="hestiaClass"></div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-header">📊 Escore de Wells — Detalhes</div>
+      <div class="secao-body">
+        <div class="itens-grid" id="wellsItens"></div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-header">🔬 Achados Clínicos e Exames</div>
+      <div class="secao-body">
+        <div class="sub-label">Hemodinâmica</div>
+        <div class="itens-grid" id="hemoItens"></div>
+        <div class="sub-label">Biomarcadores</div>
+        <div class="itens-grid" id="bioItens"></div>
+        <div class="sub-label">Imagem / ECG</div>
+        <div class="itens-grid" id="imgItens"></div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-header">📉 sPESI e Critérios Hestia</div>
+      <div class="secao-body">
+        <div class="sub-label">sPESI (Prognóstico pós-diagnóstico)</div>
+        <div class="itens-grid" id="spesiItens"></div>
+        <div class="sub-label">Critérios Hestia (Alta Precoce)</div>
+        <div class="itens-grid" id="hestiaItens"></div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-header">⚠️ Fatores de Risco para TEV Identificados</div>
+      <div class="secao-body">
+        <div class="itens-grid" id="frItens"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  Análise Automática de TEP por IA · Biocor Instituto · Rede D'Or · Diretrizes AHA/ACC/ACCP/ACEP/CHEST 2026<br>
+  <strong>Ferramenta de suporte à decisão clínica. Não substitui o julgamento médico.</strong>
+</div>
+
+<script>
+const EXEMPLOS = {
+  alto: `Paciente masculino, 68 anos, admitido via PS com dispneia súbita há 2 horas e hipotensão. FC 124 bpm, PAS 82 mmHg, SatO₂ 84% em ar ambiente. Histórico de adenocarcinoma de próstata em quimioterapia. Angio-TC de tórax confirmou TEP bilateral com trombo em sela. Troponina I: 3,2 ng/mL (elevada). NT-proBNP: 1850 pg/mL (elevado). Ecocardiograma à beira do leito: disfunção grave de ventrículo direito com dilatação e movimento paradoxal do septo. Lactato: 4,1 mmol/L. Paciente em uso de norepinefrina. Sem contraindicação absoluta à trombólise.`,
+  intermediario: `Paciente feminina, 55 anos, internada com dor pleurítica e dispneia progressiva há 4 dias. FC 108 bpm, PAS 118 mmHg, SatO₂ 91% em ar ambiente. Submetida a artroplastia de quadril há 3 semanas. Angio-TC confirmou TEP segmentar bilateral. Troponina T: 0,08 ng/mL (levemente elevada). BNP: 340 pg/mL. Ecocardiograma: disfunção leve de VD. D-Dímero: 4800 ng/mL. Sem instabilidade hemodinâmica. Edema de membro inferior direito.`,
+  baixo: `Paciente feminina, 34 anos, sem comorbidades, admitida com dor torácica pleurítica leve há 1 dia. FC 88 bpm, PAS 122 mmHg, SatO₂ 97% em ar ambiente. Uso de anticoncepcional oral. Retornou de viagem internacional longa (14 horas de voo) há 5 dias. D-Dímero positivo (620 ng/mL). Angio-TC confirmou TEP subsegmentar em lobo inferior direito. Troponina e BNP normais. Ecocardiograma normal. Sem disfunção de VD. Sem instabilidade hemodinâmica.`
+};
+
+function preencherExemplo(tipo) {
+  document.getElementById('historiaInput').value = EXEMPLOS[tipo];
+}
+
+function limpar() {
+  document.getElementById('historiaInput').value = '';
+  document.getElementById('resultado').classList.remove('ativo');
+  document.getElementById('erroBox').classList.remove('ativo');
+}
+
+async function analisar() {
+  const historia = document.getElementById('historiaInput').value.trim();
+  if (!historia || historia.length < 20) {
+    mostrarErro('Por favor, cole uma história clínica com pelo menos algumas informações do paciente.');
+    return;
+  }
+  const btn = document.getElementById('btnAnalisar');
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('ativo');
+  document.getElementById('resultado').classList.remove('ativo');
+  document.getElementById('erroBox').classList.remove('ativo');
+  const apiKey = localStorage.getItem('tep_openai_key') || '';
+  if (!apiKey) {
+    mostrarErro('Chave da OpenAI não configurada. Clique em "⚙️ Configurar Chave API" no menu acima.');
+    document.getElementById('configBanner').style.display = 'block';
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('ativo');
+    return;
+  }
+  const prompt = `Você é especialista em TEP. Analise a história clínica e extraia dados para calcular os escores.\nResponda APENAS com JSON válido (sem markdown):\n{"paciente":{"idade":null,"sexo":null,"fc":null,"pas":null,"sato2":null,"peso":null},"wells":{"score":0,"classificacao":"Baixa probabilidade","cor":"verde","itens":{"w1_tvp_sinais":false,"w2_tep_diagnostico":false,"w3_fc_100":false,"w4_imobilizacao":false,"w5_tvp_tep_previo":false,"w6_hemoptise":false,"w7_cancer":false}},"perc":{"positivos":0,"resultado":"PERC Negativo — pode excluir TEP sem D-Dímero","cor":"verde"},"spesi":{"score":0,"classificacao":"Baixo risco (sPESI=0)","cor":"verde","itens":{"sp1_idade_80":false,"sp2_cancer":false,"sp3_cardiopulmonar":false,"sp4_fc_110":false,"sp5_pas_100":false,"sp6_sato2_90":false}},"hestia":{"positivos":0,"resultado":"Hestia Negativo — elegivel para alta","cor":"verde","itens":{"h1_instabilidade":false,"h2_trombólise":false,"h3_sangramento":false,"h4_o2_24h":false,"h5_anticoag_previa":false,"h6_dor_iv":false,"h7_renal":false,"h8_hepatica":false,"h9_gestacao":false,"h10_razao_social":false}},"hemodinamica":{"hemo1_instabilidade":false,"hemo2_pcr":false,"hemo3_vasopressor":false,"hemo4_hipoxemia_grave":false},"biomarcadores":{"bio1_troponina":false,"bio2_bnp":false,"bio3_lactato":false,"bio4_ddimero":false},"imagem_ecg":{"img1_eco_vd":false,"img2_tc_vd":false,"img3_trombo_camaras":false,"img4_ecg_s1q3t3":false,"img5_angiotc_tep":false,"img6_tep_bilateral":false},"fatores_risco":{"fr1_cirurgia_maior":false,"fr2_hospitalizacao":false,"fr3_fratura":false,"fr4_trauma":false,"fr5_neoplasia":false,"fr6_antifosfolipideo":false,"fr7_trombofilia":false,"fr8_dii":false,"fr9_imobilizacao":false,"fr10_viagem":false,"fr11_gestacao":false,"fr12_estrogeno":false,"fr13_obesidade":false,"fr14_tvp_tep_previo":false},"classificacao_aha":{"categoria":"A","risco":"BAIXO RISCO","cor":"#27AE60","conduta":[]},"dados_extraidos":"Resumo do caso","alertas":[]}\n\nHISTÓRIA CLÍNICA:\n${historia}`;
+  try {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 3000 })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      if (resp.status === 401) mostrarErro('Chave da OpenAI inválida ou expirada. Clique em "⚙️ Configurar Chave API" para atualizar.');
+      else mostrarErro('Erro da OpenAI (' + resp.status + '): ' + (err.error?.message || 'Tente novamente.'));
+      return;
+    }
+    const data = await resp.json();
+    let content = data.choices[0].message.content.trim();
+    if (content.includes('```')) { const parts = content.split('```'); content = parts[1] || parts[0]; if (content.startsWith('json')) content = content.slice(4); }
+    const resultado = JSON.parse(content.trim());
+    renderizarResultado(resultado);
+  } catch (e) {
+    if (e instanceof SyntaxError) mostrarErro('Erro ao interpretar resposta da IA. Tente novamente com uma história mais detalhada.');
+    else mostrarErro('Erro de conexão: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('ativo');
+  }
+}
+
+function abrirConfigKey() {
+  const banner = document.getElementById('configBanner');
+  banner.style.display = banner.style.display === 'none' ? 'block' : 'none';
+  if (banner.style.display === 'block') {
+    const existing = localStorage.getItem('tep_openai_key') || '';
+    document.getElementById('keyInput').value = existing;
+    document.getElementById('keyInput').focus();
+  }
+}
+function salvarKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key.startsWith('sk-')) { alert('Chave inválida. Deve começar com sk-'); return; }
+  localStorage.setItem('tep_openai_key', key);
+  document.getElementById('configBanner').style.display = 'none';
+  alert('✅ Chave salva com sucesso! Agora você pode analisar histórias clínicas.');
+}
+function mostrarErro(msg) {
+  const box = document.getElementById('erroBox');
+  box.textContent = '⚠️ ' + msg;
+  box.classList.add('ativo');
+}
+
+const LABELS_WELLS = {
+  w1_tvp_sinais: 'Sinais/sintomas clínicos de TVP (+3)',
+  w2_tep_diagnostico: 'TEP é o diagnóstico mais provável (+3)',
+  w3_fc_100: 'FC > 100 bpm (+1,5)',
+  w4_imobilizacao: 'Imobilização ≥ 3d ou cirurgia nas últimas 4 sem (+1,5)',
+  w5_tvp_tep_previo: 'TVP ou TEP prévio (+1,5)',
+  w6_hemoptise: 'Hemoptise (+1)',
+  w7_cancer: 'Malignidade ativa (+1)'
+};
+const LABELS_HEMO = {
+  hemo1_instabilidade: 'Instabilidade hemodinâmica (choque)',
+  hemo2_pcr: 'PCR / Ressuscitação',
+  hemo3_vasopressor: 'Necessidade de vasopressor',
+  hemo4_hipoxemia_grave: 'Hipoxemia grave / Cianose'
+};
+const LABELS_BIO = {
+  bio1_troponina: 'Troponina elevada (I ou T)',
+  bio2_bnp: 'BNP / NT-proBNP elevado',
+  bio3_lactato: 'Lactato > 2 mmol/L',
+  bio4_ddimero: 'D-Dímero positivo'
+};
+const LABELS_IMG = {
+  img1_eco_vd: 'Disfunção de VD ao Ecocardiograma',
+  img2_tc_vd: 'Disfunção de VD à Angio-TC',
+  img3_trombo_camaras: 'Trombo em câmaras direitas',
+  img4_ecg_s1q3t3: 'S1Q3T3 ou BRD novo ao ECG',
+  img5_angiotc_tep: 'Angio-TC confirmou TEP',
+  img6_tep_bilateral: 'TEP bilateral / central (trombo em sela)'
+};
+const LABELS_SPESI = {
+  sp1_idade_80: 'Idade > 80 anos (+1)',
+  sp2_cancer: 'Câncer ativo (+1)',
+  sp3_cardiopulmonar: 'Doença cardiopulmonar crônica (+1)',
+  sp4_fc_110: 'FC ≥ 110 bpm (+1)',
+  sp5_pas_100: 'PAS < 100 mmHg (+1)',
+  sp6_sato2_90: 'SatO₂ < 90% (+1)'
+};
+const LABELS_HESTIA = {
+  h1_instabilidade: 'Instabilidade hemodinâmica',
+  'h2_trombólise': 'Necessita trombólise ou embolectomia',
+  h3_sangramento: 'Sangramento ativo ou alto risco',
+  h4_o2_24h: 'Necessita O₂ suplementar > 24h',
+  h5_anticoag_previa: 'TEP sob anticoagulação prévia',
+  h6_dor_iv: 'Dor intensa com analgesia IV',
+  h7_renal: 'Insuficiência renal (ClCr < 30)',
+  h8_hepatica: 'Insuficiência hepática grave',
+  h9_gestacao: 'Gestação',
+  h10_razao_social: 'Razão médica/social para internação'
+};
+const LABELS_FR = {
+  fr1_cirurgia_maior: 'Cirurgia maior (últimas 12 sem)',
+  fr2_hospitalizacao: 'Hospitalização (últimas 12 sem)',
+  fr3_fratura: 'Fratura de MMII (últimas 12 sem)',
+  fr4_trauma: 'Trauma maior (últimas 12 sem)',
+  fr5_neoplasia: 'Neoplasia ativa',
+  fr6_antifosfolipideo: 'Síndrome antifosfolipídeo',
+  fr7_trombofilia: 'Trombofilia hereditária',
+  fr8_dii: 'DII ativa',
+  fr9_imobilizacao: 'Imobilização > 3 dias',
+  fr10_viagem: 'Viagem longa (> 8h)',
+  fr11_gestacao: 'Gestação / puerpério',
+  fr12_estrogeno: 'Estrógeno / contraceptivo oral',
+  fr13_obesidade: 'Obesidade (IMC > 30)',
+  fr14_tvp_tep_previo: 'TVP/TEP prévio'
+};
+
+function renderItens(containerId, itens, labels) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  let temPositivo = false;
+  for (const [k, label] of Object.entries(labels)) {
+    const v = itens && itens[k];
+    if (v) temPositivo = true;
+    const div = document.createElement('div');
+    div.className = 'item-check ' + (v ? 'pos' : 'neg');
+    div.innerHTML = '<span class="ico">' + (v ? '✅' : '⬜') + '</span> ' + label;
+    el.appendChild(div);
+  }
+  if (!temPositivo && containerId === 'frItens') {
+    el.innerHTML = '<div style="color:#aaa;font-size:0.85rem;padding:8px">Nenhum fator de risco identificado na história clínica.</div>';
+  }
+}
+
+function renderizarResultado(r) {
+  document.getElementById('resumoIA').innerHTML = '<strong>🤖 Resumo da Análise:</strong> ' + (r.dados_extraidos || 'Dados extraídos com sucesso.');
+
+  if (r.alertas && r.alertas.length > 0) {
+    document.getElementById('alertasBox').style.display = 'block';
+    document.getElementById('alertasList').innerHTML = r.alertas.map(function(a) { return '<li>' + a + '</li>'; }).join('');
+  } else {
+    document.getElementById('alertasBox').style.display = 'none';
+  }
+
+  const pac = r.paciente || {};
+  const infoEl = document.getElementById('pacienteInfo');
+  const campos = [
+    ['Idade', pac.idade ? pac.idade + ' anos' : '—'],
+    ['Sexo', pac.sexo === 'M' ? 'Masculino' : pac.sexo === 'F' ? 'Feminino' : '—'],
+    ['FC', pac.fc ? pac.fc + ' bpm' : '—'],
+    ['PAS', pac.pas ? pac.pas + ' mmHg' : '—'],
+    ['SatO₂', pac.sato2 ? pac.sato2 + '%' : '—'],
+    ['Peso', pac.peso ? pac.peso + ' kg' : '—']
+  ];
+  infoEl.innerHTML = campos.map(function(c) {
+    return '<div class="pac-item"><strong>' + c[0] + '</strong><span>' + c[1] + '</span></div>';
+  }).join('');
+
+  const aha = r.classificacao_aha;
+  document.getElementById('cardClassificacao').style.background = aha.cor;
+  document.getElementById('catTitulo').textContent = 'CATEGORIA ' + aha.categoria + ' — ' + aha.risco;
+  document.getElementById('condutaLista').innerHTML = aha.conduta.map(function(c) { return '<li>' + c + '</li>'; }).join('');
+
+  const w = r.wells;
+  document.getElementById('wellsValor').textContent = w.score;
+  document.getElementById('wellsClass').textContent = w.classificacao;
+  document.getElementById('wellsClass').className = 'escore-class ' + w.cor;
+  document.getElementById('cardWells').className = 'escore-card ' + w.cor;
+
+  const p = r.perc;
+  document.getElementById('percValor').textContent = p.positivos + '/8';
+  document.getElementById('percClass').textContent = p.resultado;
+  document.getElementById('percClass').className = 'escore-class ' + p.cor;
+  document.getElementById('cardPERC').className = 'escore-card ' + p.cor;
+
+  const sp = r.spesi;
+  document.getElementById('spesiValor').textContent = sp.score;
+  document.getElementById('spesiClass').textContent = sp.classificacao;
+  document.getElementById('spesiClass').className = 'escore-class ' + sp.cor;
+  document.getElementById('cardSPESI').className = 'escore-card ' + sp.cor;
+
+  const h = r.hestia;
+  document.getElementById('hestiaValor').textContent = h.positivos + '/10';
+  document.getElementById('hestiaClass').textContent = h.resultado;
+  document.getElementById('hestiaClass').className = 'escore-class ' + h.cor;
+  document.getElementById('cardHestia').className = 'escore-card ' + h.cor;
+
+  renderItens('wellsItens', w.itens || {}, LABELS_WELLS);
+  renderItens('hemoItens', r.hemodinamica || {}, LABELS_HEMO);
+  renderItens('bioItens', r.biomarcadores || {}, LABELS_BIO);
+  renderItens('imgItens', r.imagem_ecg || {}, LABELS_IMG);
+  renderItens('spesiItens', sp.itens || {}, LABELS_SPESI);
+  renderItens('hestiaItens', h.itens || {}, LABELS_HESTIA);
+  renderItens('frItens', r.fatores_risco || {}, LABELS_FR);
+
+  document.getElementById('resultado').classList.add('ativo');
+  document.getElementById('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
