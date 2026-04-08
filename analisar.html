@@ -507,25 +507,21 @@ async function analisar() {
   document.getElementById('loading').classList.add('ativo');
   document.getElementById('resultado').classList.remove('ativo');
   document.getElementById('erroBox').classList.remove('ativo');
-  const apiKey = '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';
-  const prompt = `Você é especialista em TEP. Analise a história clínica e extraia dados para calcular os escores.\nResponda APENAS com JSON válido (sem markdown):\n{"paciente":{"idade":null,"sexo":null,"fc":null,"pas":null,"sato2":null,"peso":null},"wells":{"score":0,"classificacao":"Baixa probabilidade","cor":"verde","itens":{"w1_tvp_sinais":false,"w2_tep_diagnostico":false,"w3_fc_100":false,"w4_imobilizacao":false,"w5_tvp_tep_previo":false,"w6_hemoptise":false,"w7_cancer":false}},"perc":{"positivos":0,"resultado":"PERC Negativo — pode excluir TEP sem D-Dímero","cor":"verde"},"spesi":{"score":0,"classificacao":"Baixo risco (sPESI=0)","cor":"verde","itens":{"sp1_idade_80":false,"sp2_cancer":false,"sp3_cardiopulmonar":false,"sp4_fc_110":false,"sp5_pas_100":false,"sp6_sato2_90":false}},"hestia":{"positivos":0,"resultado":"Hestia Negativo — elegivel para alta","cor":"verde","itens":{"h1_instabilidade":false,"h2_trombólise":false,"h3_sangramento":false,"h4_o2_24h":false,"h5_anticoag_previa":false,"h6_dor_iv":false,"h7_renal":false,"h8_hepatica":false,"h9_gestacao":false,"h10_razao_social":false}},"hemodinamica":{"hemo1_instabilidade":false,"hemo2_pcr":false,"hemo3_vasopressor":false,"hemo4_hipoxemia_grave":false},"biomarcadores":{"bio1_troponina":false,"bio2_bnp":false,"bio3_lactato":false,"bio4_ddimero":false},"imagem_ecg":{"img1_eco_vd":false,"img2_tc_vd":false,"img3_trombo_camaras":false,"img4_ecg_s1q3t3":false,"img5_angiotc_tep":false,"img6_tep_bilateral":false},"fatores_risco":{"fr1_cirurgia_maior":false,"fr2_hospitalizacao":false,"fr3_fratura":false,"fr4_trauma":false,"fr5_neoplasia":false,"fr6_antifosfolipideo":false,"fr7_trombofilia":false,"fr8_dii":false,"fr9_imobilizacao":false,"fr10_viagem":false,"fr11_gestacao":false,"fr12_estrogeno":false,"fr13_obesidade":false,"fr14_tvp_tep_previo":false},"classificacao_aha":{"categoria":"A","risco":"BAIXO RISCO","cor":"#27AE60","conduta":[]},"dados_extraidos":"Resumo do caso","alertas":[]}\n\nHISTÓRIA CLÍNICA:\n${historia}`;
+  const PROXY_URL = 'https://3000-iqo90kyc82iwv0pjftopu-18cadd27.us2.manus.computer/api/tep-ia';
   try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const resp = await fetch(PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'HTTP-Referer': 'https://glaubersoncvieira-sketch.github.io/calculadora-tep/', 'X-Title': 'Calculadora TEP Biocor' },
-      body: JSON.stringify({ model: 'openrouter/auto', messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 3000 })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ historia })
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      if (resp.status === 401) mostrarErro('Chave do OpenRouter inválida. Clique em "⚙️ Configurar Chave API" para atualizar.');
-      else mostrarErro('Erro do OpenRouter (' + resp.status + '): ' + (err.error?.message || 'Tente novamente.'));
+      mostrarErro('Erro do servidor IA (' + resp.status + '): ' + (err.error || 'Tente novamente.'));
       return;
     }
     const data = await resp.json();
-    let content = data.choices?.[0]?.message?.content?.trim() || '';
-    if (!content) { mostrarErro('Resposta vazia da IA. Tente novamente.'); return; }
-    if (content.includes('```')) { const parts = content.split('```'); content = parts[1] || parts[0]; if (content.startsWith('json')) content = content.slice(4); }
-    const resultado = JSON.parse(content.trim());
+    if (!data.ok || !data.resultado) { mostrarErro('Resposta inválida do servidor. Tente novamente.'); return; }
+    const resultado = data.resultado;
     renderizarResultado(resultado);
   } catch (e) {
     if (e instanceof SyntaxError) mostrarErro('Erro ao interpretar resposta da IA. Tente novamente com uma história mais detalhada.');
