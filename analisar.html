@@ -353,20 +353,10 @@ textarea:focus { outline: none; border-color: var(--azul); }
 <div class="nav-bar">
   <a href="index.html">📊 Calculadora Manual</a>
   <a href="analisar.html" class="ativo">🤖 Análise por IA</a>
-  <a href="#" onclick="abrirConfigKey()" style="margin-left:auto">⚙️ Configurar Chave API</a>
+
 </div>
 
-<!-- Banner de configuração da chave API -->
-<div id="configBanner" style="display:none;background:#fff3cd;border-bottom:2px solid #ffc107;padding:12px 24px;font-size:0.88rem;color:#856404;">
-  <strong>⚠️ Chave do OpenRouter não configurada.</strong>
-  Para usar a análise por IA, insira sua chave gratuita abaixo (fica salva apenas no seu navegador):
-  <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <input type="password" id="keyInput" placeholder="sk-or-v1-..." style="padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:0.9rem;width:340px;max-width:100%">
-    <button onclick="salvarKey()" style="background:#1a3a6b;color:white;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600">Salvar</button>
-    <button onclick="document.getElementById('configBanner').style.display='none'" style="background:transparent;border:1px solid #856404;color:#856404;padding:8px 12px;border-radius:6px;cursor:pointer">Fechar</button>
-  </div>
-  <div style="margin-top:6px;font-size:0.78rem;color:#666">Obtenha sua chave <strong>gratuita</strong> (sem cartão de crédito) em <a href="https://openrouter.ai/keys" target="_blank" style="color:#1a3a6b">openrouter.ai/keys</a>. A chave <strong>não é enviada para nenhum servidor</strong> — fica apenas no seu dispositivo (localStorage).</div>
-</div>
+
 
 <div class="main">
 
@@ -517,14 +507,7 @@ async function analisar() {
   document.getElementById('loading').classList.add('ativo');
   document.getElementById('resultado').classList.remove('ativo');
   document.getElementById('erroBox').classList.remove('ativo');
-  const apiKey = localStorage.getItem('tep_openrouter_key') || '';
-  if (!apiKey) {
-    mostrarErro('Chave do OpenRouter não configurada. Clique em "⚙️ Configurar Chave API" no menu acima.');
-    document.getElementById('configBanner').style.display = 'block';
-    btn.disabled = false;
-    document.getElementById('loading').classList.remove('ativo');
-    return;
-  }
+  const apiKey = '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';
   const prompt = `Você é especialista em TEP. Analise a história clínica e extraia dados para calcular os escores.\nResponda APENAS com JSON válido (sem markdown):\n{"paciente":{"idade":null,"sexo":null,"fc":null,"pas":null,"sato2":null,"peso":null},"wells":{"score":0,"classificacao":"Baixa probabilidade","cor":"verde","itens":{"w1_tvp_sinais":false,"w2_tep_diagnostico":false,"w3_fc_100":false,"w4_imobilizacao":false,"w5_tvp_tep_previo":false,"w6_hemoptise":false,"w7_cancer":false}},"perc":{"positivos":0,"resultado":"PERC Negativo — pode excluir TEP sem D-Dímero","cor":"verde"},"spesi":{"score":0,"classificacao":"Baixo risco (sPESI=0)","cor":"verde","itens":{"sp1_idade_80":false,"sp2_cancer":false,"sp3_cardiopulmonar":false,"sp4_fc_110":false,"sp5_pas_100":false,"sp6_sato2_90":false}},"hestia":{"positivos":0,"resultado":"Hestia Negativo — elegivel para alta","cor":"verde","itens":{"h1_instabilidade":false,"h2_trombólise":false,"h3_sangramento":false,"h4_o2_24h":false,"h5_anticoag_previa":false,"h6_dor_iv":false,"h7_renal":false,"h8_hepatica":false,"h9_gestacao":false,"h10_razao_social":false}},"hemodinamica":{"hemo1_instabilidade":false,"hemo2_pcr":false,"hemo3_vasopressor":false,"hemo4_hipoxemia_grave":false},"biomarcadores":{"bio1_troponina":false,"bio2_bnp":false,"bio3_lactato":false,"bio4_ddimero":false},"imagem_ecg":{"img1_eco_vd":false,"img2_tc_vd":false,"img3_trombo_camaras":false,"img4_ecg_s1q3t3":false,"img5_angiotc_tep":false,"img6_tep_bilateral":false},"fatores_risco":{"fr1_cirurgia_maior":false,"fr2_hospitalizacao":false,"fr3_fratura":false,"fr4_trauma":false,"fr5_neoplasia":false,"fr6_antifosfolipideo":false,"fr7_trombofilia":false,"fr8_dii":false,"fr9_imobilizacao":false,"fr10_viagem":false,"fr11_gestacao":false,"fr12_estrogeno":false,"fr13_obesidade":false,"fr14_tvp_tep_previo":false},"classificacao_aha":{"categoria":"A","risco":"BAIXO RISCO","cor":"#27AE60","conduta":[]},"dados_extraidos":"Resumo do caso","alertas":[]}\n\nHISTÓRIA CLÍNICA:\n${historia}`;
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -553,22 +536,7 @@ async function analisar() {
   }
 }
 
-function abrirConfigKey() {
-  const banner = document.getElementById('configBanner');
-  banner.style.display = banner.style.display === 'none' ? 'block' : 'none';
-  if (banner.style.display === 'block') {
-    const existing = localStorage.getItem('tep_openrouter_key') || '';
-    document.getElementById('keyInput').value = existing;
-    document.getElementById('keyInput').focus();
-  }
-}
-function salvarKey() {
-  const key = document.getElementById('keyInput').value.trim();
-  if (!key.startsWith('sk-or-')) { alert('Chave inválida. A chave do OpenRouter deve começar com sk-or-'); return; }
-  localStorage.setItem('tep_openrouter_key', key);
-  document.getElementById('configBanner').style.display = 'none';
-  alert('✅ Chave do OpenRouter salva! Agora você pode analisar histórias clínicas gratuitamente.');
-}
+
 function mostrarErro(msg) {
   const box = document.getElementById('erroBox');
   box.textContent = '⚠️ ' + msg;
